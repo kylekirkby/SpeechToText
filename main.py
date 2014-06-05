@@ -1,68 +1,56 @@
-import urllib2, os, json, requests
+import requests, json
 
-#Globals
-access_token_url = "https://api.att.com/oauth/token"
-api_url = "https://api.att.com/oauth/token"
+import subprocess
 
-#Path to Wav File
-wav_path = "png\\01.png"
+wav_file = "test.wav"
+
+def get_access_token_json():
+
+	p = subprocess.Popen(['curl', 'https://api.att.com/oauth/token',
+				'--header','Content-Type: application/x-www-form-urlencoded',
+				'--header','Accept: application/json',
+				'--data',
+	'client_id=9bncobuoqblxoanqmm44vdxtjs4d8rs5&client_secret=g9tqrffri9ljen8ujzwijqxiw1gyzund&scope=SPEECH&grant_type=client_credentials',
+				'--request','POST'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out, err = p.communicate()
+
+	return out
 
 
-##
-##length = os.path.getsize(image_path)
-##
-##png_data = open(image_path, "rb")
-##
-##request = urllib2.Request(url, data=png_data)
-##
-##request.add_header('Cache-Control', 'no-cache')
-##
-##request.add_header('Content-Length', '%d' % length)
-##
-##request.add_header('Content-Type', 'image/png')
-##
-##res = urllib2.urlopen(request).read().strip()
-##
-##return res
+def speech_to_text(token, wav_file_path):
+
+
+	p = subprocess.Popen(['curl', 'https://api.att.com/speech/v3/speechToText',
+				'--header','Authorization: Bearer '+ token + '',
+				'--header','Accept: application/json',
+				'--header','Content-Type: audio/x-wav',
+				'--data-binary', '@' + wav_file_path,
+				'--request','POST'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out, err = p.communicate()
+
+	return out
 
 
 def get_token():
 
-   url = 'https://api.att.com/oauth/token'
+   	res = get_access_token_json()
 
-   payload = {'client_id': '9bncobuoqblxoanqmm44vdxtjs4d8rs5',
-              'client_secret':'g9tqrffri9ljen8ujzwijqxiw1gyzund',
-              'scope':'SPEECH, TTS',
-              'grant_type':'client_credentials'}
+	dictionary = json.loads(res)
 
-   headers = {'Content-Type': 'application/x-www-form-urlencoded',
-              'Accept':'application/json'}
+	token = dictionary.get('access_token')
 
-   r = requests.post(url, data=json.dumps(payload), headers=headers)
+	return token
 
-   res = r.read().strip()
-   
-   return res
+def get_text(output):
 
-def get_access_token():
-
-   data_file = "access.txt"
-   access_details = open(data_file, mode="rb")
-   length = os.path.getsize(data_file)
-   request = urllib2.Request(access_token_url)
-   request.add_header('Accept','application/json')
-   request.add_header('Content-Type','application/x-www-form-urlencoded')
-   request.add_header('Accept','application/json')
-   request.add_header('Content-Length', '%d' % length)
-   request.post(access_token_url)
-   res = urllib2.urlopen(request).read().strip()
-
-   return res   
-
-
+	text = json.loads(output)
+	
+	print text
 
 if __name__ == "__main__":
 
-   token = get_token()
+	token = get_token()
 
-   print token
+	out = speech_to_text(token, wav_file)
+
+	get_text(out.decode('utf-8'))
