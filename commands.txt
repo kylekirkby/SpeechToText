@@ -5,3 +5,7 @@ arecord -d 5 -t wav -r 8000 -c 1 newWav.wav
 sox --bits 16 --channels 1 --encoding u-law --rate 8000 newSound.raw --default-device
 
 
+
+
+
+wehwefb
